@@ -1,38 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-
-export const initThree = (
-  callback: (options: {
-    scene: THREE.Scene
-    camera: THREE.PerspectiveCamera
-    renderer: THREE.WebGLRenderer
-  }) => void
-) => {
-  // 1. 创建渲染器,指定渲染的分辨率和尺寸,然后添加到body中
-  const renderer = new THREE.WebGLRenderer({ antialias: true })
-  renderer.pixelRatio = window.devicePixelRatio
-  renderer.setSize(window.innerWidth, window.innerHeight)
-  document.body.append(renderer.domElement)
-
-  // 2. 创建场景
-  const scene = new THREE.Scene()
-
-  // 3. 创建相机
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  )
-  camera.position.set(5, 5, 10)
-  camera.lookAt(0, 0, 0)
-
-  // 4. 创建物体
-  callback({ scene, camera, renderer })
-
-  // 5. 渲染
-  renderer.render(scene, camera)
-}
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 
 export class ThreeUtil {
   $renderer: THREE.WebGLRenderer
@@ -69,11 +37,9 @@ export class ThreeUtil {
   }
 
   render() {
-    const animate = () => {
-      requestAnimationFrame(animate)
+    this.requestAnimationFrame(() => {
       this.$renderer.render(this.$scene, this.$camera)
-    }
-    animate()
+    })
 
     return this
   }
@@ -293,6 +259,45 @@ export class ThreeUtil {
     return this
   }
 
+  fbxLoader(url: string) {
+    return new Promise<{
+      model: THREE.Group<THREE.Object3DEventMap>
+      mixer: THREE.AnimationMixer
+      play: () => void
+      stop: () => void
+    }>((resolve) => {
+      const imgUrl = new URL(url, import.meta.url).href
+      const loader = new FBXLoader()
+      loader.load(imgUrl, (model) => {
+        // 创建动画混合器
+        const mixer = new THREE.AnimationMixer(model)
+
+        this.$scene.add(model)
+
+        const play = () => {
+          model.animations.forEach((clip) => {
+            const action = mixer.clipAction(clip)
+            action.play()
+          })
+        }
+
+        const stop = () => {
+          model.animations.forEach((clip) => {
+            const action = mixer.clipAction(clip)
+            action.stop()
+          })
+        }
+
+        resolve({
+          model,
+          mixer,
+          play,
+          stop
+        })
+      })
+    })
+  }
+
   animate(
     from: number,
     to: number,
@@ -305,23 +310,29 @@ export class ThreeUtil {
       const v = s / duration
       let value = from
 
-      function _run() {
+      this.requestAnimationFrame(() => {
         const now = Date.now()
         const t = now - start
-        value += v * t
+        const val = value + v * t
 
-        callback(value)
+        callback(val)
 
-        if ((s > 0 && value >= to) || (s < 0 && value <= to)) {
+        if (now - start >= duration) {
           resolve()
           return
         }
-
-        requestAnimationFrame(_run)
-      }
-
-      _run()
+      })
     })
+  }
+
+  requestAnimationFrame(callback: (ctx: typeof this) => void) {
+    const animate = () => {
+      requestAnimationFrame(animate)
+
+      callback && callback(this)
+    }
+
+    animate()
   }
 
   custom(callback: (three: typeof this) => void) {
