@@ -1,8 +1,10 @@
 import '/assets/global.css'
 import { ThreeUtil } from './utils/ThreeUtils'
+import AngryFbx from './assets/models/fbx/Angry.fbx'
+import StrutWalkingFbx from './assets/models/fbx/Strut Walking.fbx'
+import imgUrl from './assets/img/ikun.jpeg'
 
 const three = new ThreeUtil()
-const imgUrl = new URL('./assets/img/ikun.jpeg', import.meta.url).href
 
 three
   .rendererShadowEnabled()
@@ -114,32 +116,28 @@ for (let i = -3; i < 6; i++) {
 }
 
 void (async () => {
-  const angryFbx = await three
-    .fbxLoader('/assets/models/fbx/Angry.fbx')
-    .then((fbx) => {
-      fbx.model.position.set(0, 0, 0)
-      fbx.model.rotation.set(0, Math.PI, 0) // 旋转模型，如果需要的话
-      fbx.model.scale.set(0.01, 0.01, 0.01)
-      fbx.model.castShadow = true
-      fbx.model.receiveShadow = true
-      fbx.model.visible = true
-      fbx.play()
+  const angryFbx = await three.fbxLoader(AngryFbx).then((fbx) => {
+    fbx.model.position.set(0, 0, 0)
+    fbx.model.rotation.set(0, Math.PI, 0) // 旋转模型，如果需要的话
+    fbx.model.scale.set(0.01, 0.01, 0.01)
+    fbx.model.castShadow = true
+    fbx.model.receiveShadow = true
+    fbx.model.visible = true
+    fbx.play()
 
-      return fbx
-    })
+    return fbx
+  })
 
-  const walkingFbx = await three
-    .fbxLoader('/assets/models/fbx/Strut Walking.fbx')
-    .then((fbx) => {
-      fbx.model.position.set(0, 0, 0)
-      fbx.model.rotation.set(0, Math.PI, 0) // 旋转模型，如果需要的话
-      fbx.model.scale.set(0.01, 0.01, 0.01)
-      fbx.model.castShadow = true
-      fbx.model.receiveShadow = true
-      fbx.model.visible = false
+  const walkingFbx = await three.fbxLoader(StrutWalkingFbx).then((fbx) => {
+    fbx.model.position.set(0, 0, 0)
+    fbx.model.rotation.set(0, Math.PI, 0) // 旋转模型，如果需要的话
+    fbx.model.scale.set(0.01, 0.01, 0.01)
+    fbx.model.castShadow = true
+    fbx.model.receiveShadow = true
+    fbx.model.visible = false
 
-      return fbx
-    })
+    return fbx
+  })
 
   three.requestAnimationFrame(() => {
     walkingFbx.mixer.update(0.02)

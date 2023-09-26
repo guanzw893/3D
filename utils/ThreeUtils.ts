@@ -266,9 +266,8 @@ export class ThreeUtil {
       play: () => void
       stop: () => void
     }>((resolve) => {
-      const imgUrl = new URL(url, import.meta.url).href
       const loader = new FBXLoader()
-      loader.load(imgUrl, (model) => {
+      loader.load(url, (model) => {
         // 创建动画混合器
         const mixer = new THREE.AnimationMixer(model)
 
